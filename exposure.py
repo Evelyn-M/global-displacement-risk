@@ -18,7 +18,10 @@ import pyproj
 import geopandas as gpd
 import pandas as pd
 
-# GLOBAL LAYERS
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
 
 # global high resolution settlement layer
 path_ghsl = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
@@ -34,45 +37,130 @@ path_grid = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_gid.tif'
 # grid for BEM
 path_grid_tif = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_gid.tif'
 
-# COUNTRY SUB-LAYERS
+path_cntry_bem = f'/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_cntry_files/'
+
+# source and destination projections
+proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
+proj_4326 = pyproj.crs.CRS(4326)
+
+# =============================================================================
+# FUNCTIONS
+# =============================================================================
+
+
+def exp_from_bem_res():
+    """
+    country exposure on residential building values from the BEM
+
+    Parameters
+    ----------
+    cntry_name : str
+        ISO3 or long name of country
+
+    Returns
+    -------
+    exp_ghsl : climada.entity.Exposures()
+
+    """
+    cntry_iso = u_coords.country_to_iso(cntry_name)
+    geom_cntry = shapely.ops.unary_union(
+        [geom for geom in
+         u_coords.get_country_geometries([cntry_iso]).geometry])
+
+    # Load BEM Exposure (res)
+    exp_bem_res = Exposures.from_raster(
+        path_bem_res, geometry=[geom_cntry])
+    exp_bem_res.gdf = gpd.GeoDataFrame(
+        exp_bem_res.gdf,
+        geometry=gpd.points_from_xy(
+            exp_bem_res.gdf.longitude, exp_bem_res.gdf.latitude),
+        crs="EPSG:4326")
+
+    return exp_bem_res
+
+
+def exp_from_bem_nres(cntry_name):
+    """
+    country exposure on non-residential building values from the BEM
+
+    Parameters
+    ----------
+    cntry_name : str
+        ISO3 or long name of country
+
+    Returns
+    -------
+    exp_bem_nres : climada.entity.Exposures()
+    """
+    cntry_iso = u_coords.country_to_iso(cntry_name)
+    geom_cntry = shapely.ops.unary_union(
+        [geom for geom in
+         u_coords.get_country_geometries([cntry_iso]).geometry])
+
+    # Load BEM Exposure (res)
+    exp_bem_nres = Exposures.from_raster(
+        path_bem_nres, geometry=[geom_cntry])
+    exp_bem_nres.gdf = gpd.GeoDataFrame(
+        exp_bem_nres.gdf,
+        geometry=gpd.points_from_xy(
+            exp_bem_nres.gdf.longitude, exp_bem_nres.gdf.latitude),
+        crs="EPSG:4326")
+
+    return exp_bem_nres
+
+
+def exp_from_ghsl(cntry_name):
+    """
+    country exposure on population counts from the global human settlement layer
+
+    Parameters
+    ----------
+    cntry_name : str
+        ISO3 or long name of country
+
+    Returns
+    -------
+    exp_ghsl : climada.entity.Exposures()
+    """
+    cntry_iso = u_coords.country_to_iso(cntry_name)
+    geom_cntry = shapely.ops.unary_union(
+        [geom for geom in
+         u_coords.get_country_geometries([cntry_iso]).geometry])
+
+    exp_ghsl = Exposures.from_raster(
+        path_ghsl, src_crs=proj_54009, dst_crs=proj_4326, geometry=[geom_cntry])
+
+    exp_ghsl.gdf = gpd.GeoDataFrame(
+        exp_ghsl.gdf,
+        geometry=gpd.points_from_xy(
+            exp_ghsl.gdf.longitude, exp_ghsl.gdf.latitude),
+        crs="EPSG:4326")
+
+    return exp_ghsl
+
+
+def exp_from_bem_subcomps():
+    """
+    country exposure on various variables from BEM sub-components.
+    Options:
+        - 
+        - 
+        -
+
+    """
+
+
+# =============================================================================
+# USAGE
+# =============================================================================
+
 cntry_name = 'Somalia'
 cntry_iso = u_coords.country_to_iso(cntry_name)
-path_cntry_bem_csv = f'/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_cntry_files/{cntry_iso.lower()}_bem_1x1_valfis.csv'
+path_cntry_bem_csv = f'{path_cntry_bem}{cntry_iso.lower()}_bem_1x1_valfis.csv'
 
 geom_cntry = shapely.ops.unary_union(
     [geom for geom in
      u_coords.get_country_geometries([cntry_iso]).geometry])
-
-
-# Load GHSL Exposure
-proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
-proj_4326 = pyproj.crs.CRS(4326)
-
-exp_ghsl = Exposures.from_raster(
-    path_ghsl, src_crs=proj_54009, dst_crs=proj_4326, geometry=[geom_cntry])
-
-exp_ghsl.gdf = gpd.GeoDataFrame(
-    exp_ghsl.gdf,
-    geometry=gpd.points_from_xy(exp_ghsl.gdf.longitude, exp_ghsl.gdf.latitude),
-    crs="EPSG:4326")
-
-# Load BEM Exposure (res)
-exp_bem_res = Exposures.from_raster(
-    path_bem_res, geometry=[geom_cntry])
-exp_bem_res.gdf = gpd.GeoDataFrame(
-    exp_bem_res.gdf,
-    geometry=gpd.points_from_xy(
-        exp_bem_res.gdf.longitude, exp_bem_res.gdf.latitude),
-    crs="EPSG:4326")
-
-# Load BEM Exposure (nres)
-exp_bem_nres = Exposures.from_raster(
-    path_bem_nres, geometry=[geom_cntry])
-exp_bem_nres.gdf = gpd.GeoDataFrame(
-    exp_bem_nres.gdf,
-    geometry=gpd.points_from_xy(
-        exp_bem_nres.gdf.longitude, exp_bem_nres.gdf.latitude),
-    crs="EPSG:4326")
 
 
 # reshape csv-based df of BEM sub-indicators
