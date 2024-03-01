@@ -10,7 +10,7 @@ Created on Fri Feb 23 12:03:08 2024
 Formatting exposure layers for the displacement risk computations
 """
 
-
+import fiona
 from climada.entity.exposures import Exposures
 from climada.util import coordinates as u_coords
 import shapely
@@ -18,10 +18,11 @@ import pyproj
 import geopandas as gpd
 import pandas as pd
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
+
+# TODO: replace by paths on cluster
 
 # global high resolution settlement layer
 path_ghsl = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
@@ -32,11 +33,10 @@ path_bem_res = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raste
 # BEM values non-residential
 path_bem_nres = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
 
-path_grid = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_gid.tif'
-
 # grid for BEM
 path_grid_tif = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_gid.tif'
 
+# folder for country bem files with sub-components
 path_cntry_bem = f'/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_cntry_files/'
 
 # source and destination projections
@@ -48,7 +48,7 @@ proj_4326 = pyproj.crs.CRS(4326)
 # =============================================================================
 
 
-def exp_from_bem_res():
+def exp_from_bem_res(cntry_name):
     """
     country exposure on residential building values from the BEM
 
@@ -139,37 +139,159 @@ def exp_from_ghsl(cntry_name):
     return exp_ghsl
 
 
-def exp_from_bem_subcomps():
+def gdf_from_bem_subcomps(cntry_name, opt='full'):
     """
-    country exposure on various variables from BEM sub-components.
+    country gdfs on various variables from BEM sub-components, with matching
+    centroids.
+
     Options:
-        - 
-        - 
-        -
+        - 'pop_per_btype' : population count per seismic building type and gridpoint.
+        - 'sec_per_btype' : economic sector per seismic building type and gridpoint.
+        - 'full' : full gdf, no regrouping or deletion
+        - 'per_grid' : cpx class per gridpoint, pop count sum per gridpoint,
+            valfis sum per gridpoint, avg. share of 1, 2, 3 floors,
+            mode of building code, mode of sector
 
+
+    Parameters
+    ----------
+    cntry_name : str
+    opt : str
     """
+    cntry_iso = u_coords.country_to_iso(cntry_name)
+    path_cntry_bem_csv = f'{path_cntry_bem}{cntry_iso.lower()}_bem_1x1_valfis.csv'
+
+    geom_cntry = shapely.ops.unary_union(
+        [geom for geom in
+         u_coords.get_country_geometries([cntry_iso]).geometry])
+
+    # load country csv as df
+    df_bem_subcomps = pd.read_csv(path_cntry_bem_csv)
+
+    # delete unnecessary columns (based on UNEP-GRID feedback)
+    df_bem_subcomps.pop('bs_value_nr')
+    df_bem_subcomps.pop('bs_value_r')
+
+    # delete columns with no economic and human value
+    df_bem_subcomps = df_bem_subcomps[(
+        (df_bem_subcomps['valhum'] > 0) & (df_bem_subcomps['valfis'] > 0))]
+
+    # load centroids
+    gdf_grid = _centr_from_raster(cntry_name)
+
+    # assign centroids to df
+    df_bem_subcomps = _assign_centr2df(
+        df_bem_subcomps, gdf_grid)
+
+    if opt == 'full':
+        return df_bem_subcomps
+
+    if opt == 'per_grid':
+        return _agg_gdf_per_gridpoint(df_bem_subcomps)
+
+    return df_bem_subcomps
 
 
+def _centr_from_raster(cntry_name):
+    """
+    load the 1x1km centroids on which the BEM is defined into a gdf
+    gid column is labelled id_1x
+
+    Returns
+    -------
+    gdf_centr : gpd.GeoDataFrame
+    """
+    cntry_iso = u_coords.country_to_iso(cntry_name)
+    geom_cntry = shapely.ops.unary_union(
+        [geom for geom in
+         u_coords.get_country_geometries([cntry_iso]).geometry])
+
+    meta, value = u_coords.read_raster(path_grid_tif, geometry=[geom_cntry])
+    ulx, xres, _, uly, _, yres = meta['transform'].to_gdal()
+    lrx = ulx + meta['width'] * xres
+    lry = uly + meta['height'] * yres
+    x_grid, y_grid = np.meshgrid(np.arange(ulx + xres / 2, lrx, xres),
+                                 np.arange(uly + yres / 2, lry, yres))
+    gdf_centr = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy(x_grid.flatten(), y_grid.flatten()),
+        crs='epsg:4326')
+
+    gdf_centr['id_1x'] = value.reshape(-1)
+
+    return gdf_centr
+
+
+def _assign_centr2df(df, gdf_centr):
+    """
+    combine bem-subcomponent df with centroids by id_1x (gid)
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+    """
+    return gpd.GeoDataFrame(df.merge(gdf_grid, on='id_1x', how='left'))
+
+
+def _agg_gdf_per_gridpoint(gdf):
+    return gpd.GeoDataFrame(gdf.groupby('id_1x').agg(
+        {'valfis': 'sum',
+         'valhum': 'sum',
+         'cpx': 'mean',
+         'bd_1_floor': 'mean',
+         'bd_2_floor': 'mean',
+         'bd_3_floor': 'mean',
+         'geometry': 'first',
+         'se_seismo': pd.Series.mode,
+         'sector': pd.Series.mode
+         }), crs=gdf.crs)
 # =============================================================================
 # USAGE
 # =============================================================================
 
+
 cntry_name = 'Somalia'
-cntry_iso = u_coords.country_to_iso(cntry_name)
-path_cntry_bem_csv = f'{path_cntry_bem}{cntry_iso.lower()}_bem_1x1_valfis.csv'
+gdf_bem_subcomps = gdf_from_bem_subcomps(cntry_name, opt='full')
+# gdf_per_centr = gdf_from_bem_subcomps(cntry_name, opt='per_grid') -> from scratch
+gdf_per_centr = gpd.GeoDataFrame(gdf_bem_subcomps.groupby('id_1x').agg(
+    {'valfis': 'sum',
+     'valhum': 'sum',
+     'cpx': 'mean',
+     'bd_1_floor': 'mean',
+     'bd_2_floor': 'mean',
+     'bd_3_floor': 'mean',
+     'geometry': 'first',
+     'se_seismo': pd.Series.mode,
+     'sector': pd.Series.mode
+     }), crs=gdf_bem_subcomps.crs)
 
-geom_cntry = shapely.ops.unary_union(
-    [geom for geom in
-     u_coords.get_country_geometries([cntry_iso]).geometry])
+exp_cpx = Exposures(gdf_per_centr)
+exp_cpx.gdf.rename({'cpx': 'value'}, axis=1, inplace=True)
+exp_cpx.value_unit = 'cpx class'
+exp_cpx.gdf['longitude'] = exp_cpx.gdf.geometry.x
+exp_cpx.gdf['latitude'] = exp_cpx.gdf.geometry.y
+exp_cpx.gdf = exp_cpx.gdf[~np.isnan(
+    exp_cpx.gdf.latitude)]  # drop nan centroids
+exp_cpx.plot_scatter()
 
 
-# reshape csv-based df of BEM sub-indicators
-df_bem_parts = pd.read_csv(path_cntry_bem_csv)
-df_bem_parts = df_bem_parts[(
-    (df_bem_parts['bs_value_r'] > 0) & (df_bem_parts['bs_value_nr'] > 0) &
-    (df_bem_parts['valhum'] > 0) & (
-        df_bem_parts['valfis'] > 0)  # 11115126 -> 6085413
-)]
+exp_hum = Exposures(gdf_per_centr)
+exp_hum.gdf.rename({'valhum': 'value'}, axis=1, inplace=True)
+exp_hum.value_unit = 'Pop. count'
+exp_hum.gdf['longitude'] = exp_hum.gdf.geometry.x
+exp_hum.gdf['latitude'] = exp_hum.gdf.geometry.y
+exp_hum.gdf = exp_hum.gdf[~np.isnan(
+    exp_hum.gdf.latitude)]  # drop nan centroids
+exp_hum.plot_scatter()
+
+exp_val = Exposures(gdf_per_centr.copy())
+exp_val.gdf.rename({'valfis': 'value'}, axis=1, inplace=True)
+exp_val.value_unit = 'Economic value (mio US$)'
+exp_val.gdf['longitude'] = exp_val.gdf.geometry.x
+exp_val.gdf['latitude'] = exp_val.gdf.geometry.y
+exp_val.gdf = exp_val.gdf[~np.isnan(
+    exp_val.gdf.latitude)]  # drop nan centroids
+exp_val.plot_scatter()
+
 
 df_bem_parts['sector_se_seismo'] = df_bem_parts.sector + \
     '_'+df_bem_parts.se_seismo
@@ -183,12 +305,3 @@ df_bem_parts_pivot = df_bem_parts.pivot(
 df_bem_parts_pivot['cpx'] = df_bem_parts.groupby('id_1x')['cpx'].mean()
 # df_bem_parts_pivot.size/df_bem_parts.size =  0.9509977981176239
 # del df_bem_parts
-
-
-# Load BEM grid as exposure
-exp_bem_grid = Exposures.from_raster(path_grid_tif, geometry=[geom_cntry])
-exp_bem_res.gdf = gpd.GeoDataFrame(
-    exp_bem_grid.gdf,
-    geometry=gpd.points_from_xy(
-        exp_bem_grid.gdf.longitude, exp_bem_grid.gdf.latitude),
-    crs="EPSG:4326")
