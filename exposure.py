@@ -17,6 +17,7 @@ import shapely
 import pyproj
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 
 # =============================================================================
 # CONSTANTS
@@ -75,6 +76,7 @@ def exp_from_bem_res(cntry_name):
         geometry=gpd.points_from_xy(
             exp_bem_res.gdf.longitude, exp_bem_res.gdf.latitude),
         crs="EPSG:4326")
+    exp_bem_res.value_unit = 'Residential building value (USD)'
 
     return exp_bem_res
 
@@ -105,6 +107,7 @@ def exp_from_bem_nres(cntry_name):
         geometry=gpd.points_from_xy(
             exp_bem_nres.gdf.longitude, exp_bem_nres.gdf.latitude),
         crs="EPSG:4326")
+    exp_bem_nres.value_unit = 'Non-residential building value (USD)'
 
     return exp_bem_nres
 
@@ -135,6 +138,7 @@ def exp_from_ghsl(cntry_name):
         geometry=gpd.points_from_xy(
             exp_ghsl.gdf.longitude, exp_ghsl.gdf.latitude),
         crs="EPSG:4326")
+    exp_ghsl.value_unit = 'Population count'
 
     return exp_ghsl
 
@@ -221,7 +225,7 @@ def _centr_from_raster(cntry_name):
     return gdf_centr
 
 
-def _assign_centr2df(df, gdf_centr):
+def _assign_centr2df(df, gdf_grid):
     """
     combine bem-subcomponent df with centroids by id_1x (gid)
 
@@ -244,64 +248,3 @@ def _agg_gdf_per_gridpoint(gdf):
          'se_seismo': pd.Series.mode,
          'sector': pd.Series.mode
          }), crs=gdf.crs)
-# =============================================================================
-# USAGE
-# =============================================================================
-
-
-cntry_name = 'Somalia'
-gdf_bem_subcomps = gdf_from_bem_subcomps(cntry_name, opt='full')
-# gdf_per_centr = gdf_from_bem_subcomps(cntry_name, opt='per_grid') -> from scratch
-gdf_per_centr = gpd.GeoDataFrame(gdf_bem_subcomps.groupby('id_1x').agg(
-    {'valfis': 'sum',
-     'valhum': 'sum',
-     'cpx': 'mean',
-     'bd_1_floor': 'mean',
-     'bd_2_floor': 'mean',
-     'bd_3_floor': 'mean',
-     'geometry': 'first',
-     'se_seismo': pd.Series.mode,
-     'sector': pd.Series.mode
-     }), crs=gdf_bem_subcomps.crs)
-
-exp_cpx = Exposures(gdf_per_centr)
-exp_cpx.gdf.rename({'cpx': 'value'}, axis=1, inplace=True)
-exp_cpx.value_unit = 'cpx class'
-exp_cpx.gdf['longitude'] = exp_cpx.gdf.geometry.x
-exp_cpx.gdf['latitude'] = exp_cpx.gdf.geometry.y
-exp_cpx.gdf = exp_cpx.gdf[~np.isnan(
-    exp_cpx.gdf.latitude)]  # drop nan centroids
-exp_cpx.plot_scatter()
-
-
-exp_hum = Exposures(gdf_per_centr)
-exp_hum.gdf.rename({'valhum': 'value'}, axis=1, inplace=True)
-exp_hum.value_unit = 'Pop. count'
-exp_hum.gdf['longitude'] = exp_hum.gdf.geometry.x
-exp_hum.gdf['latitude'] = exp_hum.gdf.geometry.y
-exp_hum.gdf = exp_hum.gdf[~np.isnan(
-    exp_hum.gdf.latitude)]  # drop nan centroids
-exp_hum.plot_scatter()
-
-exp_val = Exposures(gdf_per_centr.copy())
-exp_val.gdf.rename({'valfis': 'value'}, axis=1, inplace=True)
-exp_val.value_unit = 'Economic value (mio US$)'
-exp_val.gdf['longitude'] = exp_val.gdf.geometry.x
-exp_val.gdf['latitude'] = exp_val.gdf.geometry.y
-exp_val.gdf = exp_val.gdf[~np.isnan(
-    exp_val.gdf.latitude)]  # drop nan centroids
-exp_val.plot_scatter()
-
-
-df_bem_parts['sector_se_seismo'] = df_bem_parts.sector + \
-    '_'+df_bem_parts.se_seismo
-df_bem_parts.pop('sector')
-df_bem_parts.pop('se_seismo')
-
-df_bem_parts_pivot = df_bem_parts.pivot(
-    index=['id_1x'], columns='sector_se_seismo',
-    values=['bs_value_r', 'bs_value_nr',
-            'valhum', 'valfis', 'bd_1_floor', 'bd_2_floor', 'bd_3_floor'])
-df_bem_parts_pivot['cpx'] = df_bem_parts.groupby('id_1x')['cpx'].mean()
-# df_bem_parts_pivot.size/df_bem_parts.size =  0.9509977981176239
-# del df_bem_parts
