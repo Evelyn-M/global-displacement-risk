@@ -14,6 +14,7 @@ import fiona
 from climada.entity.exposures import Exposures
 from climada.util import coordinates as u_coords
 import shapely
+from shapely.geometry import box
 import pyproj
 import geopandas as gpd
 import pandas as pd
@@ -210,7 +211,9 @@ def _centr_from_raster(cntry_name):
         [geom for geom in
          u_coords.get_country_geometries([cntry_iso]).geometry])
 
-    meta, value = u_coords.read_raster(path_grid_tif, geometry=[geom_cntry])
+    meta, value = u_coords.read_raster(path_grid_tif,
+                                       geometry=[box(*geom_cntry.bounds)])
+
     ulx, xres, _, uly, _, yres = meta['transform'].to_gdal()
     lrx = ulx + meta['width'] * xres
     lry = uly + meta['height'] * yres
