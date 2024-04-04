@@ -3,7 +3,7 @@
 """
 Created in February 2024
 
-description: Make flood hazard layer 
+description: Make coastal flood hazard layer 
 
 @author: simonameiler
 """
@@ -12,130 +12,93 @@ import os
 import numpy as np
 
 from climada.hazard import Hazard
-from climada.entity import ImpactFunc, ImpactFuncSet, LitPop
-from climada.engine import ImpactCalc
-from climada.util.constants import SYSTEM_DIR
 
-def generate_flood_map_list(root_dir):
+def find_tiles(lat_min, lat_max, lon_min, lon_max):
     """
-    Generate a list of file paths for each RCP/year/RP combination within the given directory.
+    Find all the latitude-longitude tile names that cover the specified extent.
+
+    Parameters:
+    - lat_min: Minimum latitude of the extent
+    - lat_max: Maximum latitude of the extent
+    - lon_min: Minimum longitude of the extent
+    - lon_max: Maximum longitude of the extent
+
+    Returns:
+    - List of tile names covering the specified extent.
+    """
+    tile_names = []
+
+    # Convert lat and lon to integers and adjust ranges for iteration
+    lat_start = int(lat_min) - (1 if lat_min < -1 else 0)
+    lat_end = int(lat_max) + (1 if lat_max % 1 != 0 else 0)
+    lon_start = int(lon_min)
+    lon_end = int(lon_max) + (1 if lon_max % 1 != 0 else 0)
+
+    for lat in range(lat_start, lat_end):
+        for lon in range(lon_start, lon_end):
+            # Determine latitude direction and format
+            lat_dir = 'N' if lat >= 0 else 'S'
+            lat_name = f"{abs(lat):02d}"
+
+            # Determine longitude direction and format
+            lon_dir = 'E' if lon >= 0 else 'W'
+            lon_name = f"{abs(lon):03d}"
+
+            # Construct tile name and add to the list
+            tile_name = f"{lat_dir}{lat_name}{lon_dir}{lon_name}"
+            tile_names.append(tile_name)
+
+    return tile_names
+
+def generate_hazard_object(tiles, root_dir, selected_rcp, selected_year, HAZ_TYPE):
+    """
+    Generate a combined hazard object from raster files for the specified tiles and RCP/year combination,
+    by first creating a hazard object for each tile, then concatenating.
 
     Args:
+    - tiles (list of str): List of tile identifiers.
     - root_dir (str): The root directory containing the flood map data.
+    - selected_rcp (str): The RCP scenario to use.
+    - selected_year (str): The year to use.
+    - HAZ_TYPE (str): The type of hazard.
 
     Returns:
-    - dict: A nested dictionary with RCP, year, and RP as keys, leading to lists of file paths.
+    - Combined Hazard object for the specified RCP/year across all tiles.
     """
-    flood_maps = {}
-    # Walk through the directory structure
-    for root, dirs, files in os.walk(root_dir):
-        # Filter out the relevant directories and files based on naming conventions
-        for file in files:
-            if file.endswith('.tif'):
-                # Extract details from the folder and file names
-                path_parts = root.split(os.sep)
-                # Assuming the structure is always consistent and the relevant parts are always present
-                rcp_year = path_parts[-1]
-                rcp, year = rcp_year.split('_')
-                rp = file.replace('.tif', '').upper()
-                
-                # Initialize the dictionary structure if necessary
-                if rcp not in flood_maps:
-                    flood_maps[rcp] = {}
-                if year not in flood_maps[rcp]:
-                    flood_maps[rcp][year] = {}
-                if rp not in flood_maps[rcp][year]:
-                    flood_maps[rcp][year][rp] = []
-
-                # Add the file path to the list
-                flood_maps[rcp][year][rp].append(os.path.join(root, file))
-    
-    return flood_maps
-
-def process_and_combine_by_combination(file_dict, selected_rcp=None, selected_year=None, selected_rp=None):
-    """
-    Processes and combines coastal flood hazard tiles into single Hazard objects for each specified 
-    RCP, year, and RP combination. If no specific RCP, year, or RP is provided, it processes all available 
-    combinations within the provided file dictionary.
-    
-    Parameters:
-    - file_dict (dict): A nested dictionary with structure {rcp: {year: {rp: [file_paths]}}} containing 
-      paths to raster files for each RCP, year, and RP combination.
-    - selected_rcp (str or list of str, optional): A specific RCP or list of RCPs to process. If None, 
-      all RCPs in the file_dict are processed.
-    - selected_year (str or list of str, optional): A specific year or list of years to process. If None, 
-      all years in the file_dict for the selected RCPs are processed.
-    - selected_rp (str or list of str, optional): A specific return period or list of return periods to 
-      process. If None, all RPs in the file_dict for the selected RCPs and years are processed.
-    
-    Returns:
-    - dict: A nested dictionary with the same structure as the input file_dict, where each list of file 
-      paths is replaced with a combined Hazard object for that RCP, year, and RP combination.
-    """
-    combined_hazards = {}
-    for rcp, years in file_dict.items():
-        if selected_rcp and rcp not in np.atleast_1d(selected_rcp):
-            continue
-        combined_hazards[rcp] = {}
-
-        for year, rps in years.items():
-            if selected_year and year not in np.atleast_1d(selected_year):
+    hazards = []
+    for tile in tiles:
+        tile_path = os.path.join(root_dir, tile, f"{selected_rcp}_{selected_year}")
+        # Check if the tile directory exists before processing
+        if os.path.exists(tile_path):
+            haz_files = [os.path.join(tile_path, file) for file in os.listdir(tile_path) if file.endswith('.tif')]
+            # Ensure there are files to process
+            if not haz_files:
                 continue
-            combined_hazards[rcp][year] = {}
 
-            for rp, files in rps.items():
-                if selected_rp and rp not in np.atleast_1d(selected_rp):
-                    continue
-                hazards = []
-                for file_path in files:
-                    hazard = Hazard.from_raster(file_path, haz_type='FL')
-                    hazard.units = 'm'
-                    hazard.centroids.set_meta_to_lat_lon()
-                    hazards.append(hazard)
-                
-                combined_hazard = Hazard.concat(hazards)
-                combined_hazards[rcp][year][rp] = combined_hazard
+            rp_values = [int(file.split('RP')[-1].replace('.tif', '')) for file in haz_files]
+            rp_values_sorted, haz_files_sorted = zip(*sorted(zip(rp_values, haz_files)))
 
-    return combined_hazards
+            # Create Hazard object for the current tile
+            haz = Hazard.from_raster(
+                haz_type=HAZ_TYPE, 
+                files_intensity=list(haz_files_sorted), 
+                src_crs='EPSG:4326',
+                attrs={
+                    'unit': 'm', 
+                    'event_id': np.arange(len(haz_files_sorted)), 
+                    'frequency': 1 / np.array(rp_values_sorted)
+                }
+            )
+            haz.centroids.set_meta_to_lat_lon()
+            hazards.append(haz)
+        else:
+            print(f"Tile directory {tile_path} not found, skipping...")
 
-
-# Usage example
-hazard_dir = SYSTEM_DIR/"hazard"/"coastal_flood"
-root_directory = hazard_dir/"Somalia_1k"
-flood_map_files = generate_flood_map_list(root_directory)
-
-combined_hazards = process_and_combine_by_combination(flood_map_files, selected_rcp='RCP85', selected_year='2050', selected_rp='RP100')
-
-coastal_flood = combined_hazards['RCP85']['2050']['RP100']
-
-
-#%% load GHSL exp and perform quick impact calculation
-
-os.chdir('/Users/simonameiler/Documents/WCR/Displacement/global-displacement-risk') # change back to root folder, not "~/doc"
-import exposure
-
-cntry_name = 'Somalia'
-
-# import exposure from GHSL
-exp_ghsl = exposure.exp_from_ghsl(cntry_name)
-
-# get centroids from exp_ghsl
-cent_som = exp_ghsl.gdf.centroid
-
-# get step function
-inten = (0, 0.5, 10)
-imp_fun = ImpactFunc.from_step_impf(intensity=inten, haz_type='FL', impf_id=1)
-
-impfuncSet = ImpactFuncSet([imp_fun])
-#impfuncSet.append(imp_fun)
-
-# Get the hazard type and hazard id
-[haz_type] = impfuncSet.get_hazard_types()
-[haz_id] = impfuncSet.get_ids()[haz_type]
-# Exposures: rename column and assign id
-exp_ghsl.gdf.rename(columns={"impf_": "impf_" + haz_type}, inplace=True)
-exp_ghsl.gdf['impf_' + haz_type] = haz_id
-
-# calc impact
-impact = ImpactCalc(exp_ghsl, impfuncSet, coastal_flood).impact(save_mat=True)
+    # Concatenate all Hazard objects into a single combined Hazard object, if any were created
+    if hazards:
+        combined_hazard = Hazard.concat(hazards)
+        return combined_hazard
+    else:
+        print("No hazard files found for the specified tiles and RCP/year combination.")
+        return None
 
