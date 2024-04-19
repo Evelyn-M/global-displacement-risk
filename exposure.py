@@ -45,6 +45,9 @@ path_cntry_bem = f'/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_cntry_fil
 proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
 proj_4326 = pyproj.crs.CRS(4326)
 
+# BEM id_1x numbers to gadm / unmap admin1 classes
+path_admin1_attrs = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_admin.csv'
+
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
@@ -251,3 +254,58 @@ def _agg_gdf_per_gridpoint(gdf):
          'se_seismo': pd.Series.mode,
          'sector': pd.Series.mode
          }), crs=gdf.crs)
+
+
+def assign_admin1_attr(gdf_bem, path_admin1_attrs, source):
+    """
+    Parameters
+    ----------
+    path_admin1_attrs : str
+        path to grid_1x1_admin.csv
+    gdf_bem : gpd.GeoDataFrame
+        gdf loaded from country BEM data
+    source : str
+        'unmap' or 'gadm'. Which admin1 categorization source to use.
+    """
+
+    df_admin1_sel = _read_country_chunks(
+        path_admin1_attrs, (gdf_bem['id_1x'].min(), gdf_bem['id_1x'].max()))
+    return _assign_admin1_attr(gdf_bem, df_admin1_sel, source)
+
+
+def _read_country_chunks(path_admin1_attrs, gid_bounds):
+    """
+    Parameters
+    ----------
+    path_admin1_attrs : str
+        path to grid_1x1_admin.csv
+    gid_bounds : (int, int)
+        min and max of id_1x column of BEM-gdf
+    """
+    gid_min, gid_max = gid_bounds
+    chunk_list = []
+    for chunk in pd.read_csv(path_admin1_attrs, sep=',', chunksize=50000):
+        chunk_list.append(chunk[((chunk.gid >= gid_min) &
+                                (chunk.gid <= gid_max))])
+
+    return pd.concat(chunk_list)
+
+
+def _assign_admin1_attr(gdf_bem, df_admin1_sel, source):
+    """
+    Parameters
+    ----------
+    gdf_bem : gpd.GeoDataFrame
+        gdf loaded from country BEM data
+    df_admin1_sel : pd.DataFrame
+        dataframe with admin 1 categorizations per gid (id_1x) attribute of centroids
+    source : str
+        'unmap' or 'gadm'. Which admin1 categorization source to use.
+    """
+
+    val_col = 'unmap_2020_adm1_gid' if source == 'unmap' else 'gadm_410_adm1_fid'
+
+    gdf_bem = pd.merge(
+        gdf_bem, df_admin1_sel[['gid', val_col]], left_on='id_1x', right_on='gid')
+    gdf_bem.pop('gid')
+    return gdf_bem.rename({val_col: 'admin1'}, axis=1, inplace=True)
