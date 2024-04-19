@@ -270,7 +270,8 @@ def assign_admin1_attr(gdf_bem, path_admin1_attrs, source):
 
     df_admin1_sel = _read_country_chunks(
         path_admin1_attrs, (gdf_bem['id_1x'].min(), gdf_bem['id_1x'].max()))
-    return _assign_admin1_attr(gdf_bem, df_admin1_sel, source)
+    gdf_bem = _assign_admin1_attr(gdf_bem, df_admin1_sel, source)
+    return gdf_bem
 
 
 def _read_country_chunks(path_admin1_attrs, gid_bounds):
@@ -308,4 +309,5 @@ def _assign_admin1_attr(gdf_bem, df_admin1_sel, source):
     gdf_bem = pd.merge(
         gdf_bem, df_admin1_sel[['gid', val_col]], left_on='id_1x', right_on='gid')
     gdf_bem.pop('gid')
-    return gdf_bem.rename({val_col: 'admin1'}, axis=1, inplace=True)
+    gdf_bem.rename({val_col: 'admin1'}, axis=1, inplace=True)
+    return gdf_bem
