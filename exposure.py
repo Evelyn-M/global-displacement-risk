@@ -36,10 +36,10 @@ path_bem_res = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raste
 path_bem_nres = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
 
 # grid for BEM
-path_grid_tif = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_gid.tif'
+path_grid_tif = '/cluster/work/climate/evelynm/IDMC_UNU/centroids/grid_1x1_gid.tif'
 
 # folder for country bem files with sub-components
-path_cntry_bem = f'/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_cntry_files/'
+path_cntry_bem = '/cluster/work/climate/evelynm/IDMC_UNU/exposure/bem_cntry_files/'
 
 # source and destination projections
 proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
@@ -49,7 +49,6 @@ proj_4326 = pyproj.crs.CRS(4326)
 path_admin1_attrs = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_admin.csv'
 
 # =============================================================================
-# FUNCTIONS
 # =============================================================================
 
 
