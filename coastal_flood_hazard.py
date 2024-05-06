@@ -91,8 +91,8 @@ def generate_hazard_object(tiles, root_dir, selected_rcp, selected_year, HAZ_TYP
             )
             haz.centroids.set_meta_to_lat_lon()
             hazards.append(haz)
-        else:
-            print(f"Tile directory {tile_path} not found, skipping...")
+        #else:
+        #    print(f"Tile directory {tile_path} not found, skipping...")
 
     # Concatenate all Hazard objects into a single combined Hazard object, if any were created
     if hazards:
