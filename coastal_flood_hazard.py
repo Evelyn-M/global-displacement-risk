@@ -86,7 +86,6 @@ def generate_hazard_object(tiles, root_dir, selected_rcp, selected_year, HAZ_TYP
                 attrs={
                     'unit': 'm', 
                     'event_id': np.arange(len(haz_files_sorted)), 
-                    #'event_id': np.arange(len(np.array(rp_values, dtype=int))),
                     'frequency': 1 / np.array(rp_values_sorted)
                 }
             )
@@ -99,7 +98,7 @@ def generate_hazard_object(tiles, root_dir, selected_rcp, selected_year, HAZ_TYP
     if hazards:
         combined_hazard = Hazard.concat(hazards)
         return combined_hazard
-    #else:
-    #    print("No hazard files found for the specified tiles and RCP/year combination.")
-    #    return None
+    else:
+        print("No hazard files found for the specified tiles and RCP/year combination.")
+        return None
 
