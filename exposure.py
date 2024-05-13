@@ -28,39 +28,39 @@ from climada.util.constants import SYSTEM_DIR
 # # TODO: replace by paths on cluster
 
 # # global high resolution settlement layer
-# path_ghsl = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
+path_ghsl = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
 
-# # BEM values residential
-# path_bem_res = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_res.tif'
+# BEM values residential
+path_bem_res = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_res.tif'
 
 # # BEM values non-residential
-# path_bem_nres = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
+path_bem_nres = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
 
 # # grid for BEM
-# path_grid_tif = '/cluster/work/climate/evelynm/IDMC_UNU/centroids/grid_1x1_gid.tif'
+path_grid_tif = '/cluster/work/climate/evelynm/IDMC_UNU/centroids/grid_1x1_gid.tif'
 
 # # folder for country bem files with sub-components
-# path_cntry_bem = '/cluster/work/climate/evelynm/IDMC_UNU/exposure/bem_cntry_files/'
+path_cntry_bem = '/cluster/work/climate/evelynm/IDMC_UNU/exposure/bem_cntry_files/'
 
 # # source and destination projections
 # proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
 # proj_4326 = pyproj.crs.CRS(4326)
 
 # # BEM id_1x numbers to gadm / unmap admin1 classes
-# path_admin1_attrs = '/Users/evelynm/Documents/UNU_IDMC/data/exposure/grid_1x1_admin.csv'
+path_admin1_attrs = '/cluster/work/climate/evelynm/IDMC_UNU/centroids/grid_1x1_admin.csv'
 
-path_ghsl = SYSTEM_DIR/'exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
+# path_ghsl = SYSTEM_DIR/'exposure/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0/GHS_POP_E2020_GLOBE_R2023A_54009_1000_V1_0.tif'
 # BEM values residential
-path_bem_res = SYSTEM_DIR/'exposure/bem_global_raster/bem_1x1_valfis_res.tif'
+# path_bem_res = SYSTEM_DIR/'exposure/bem_global_raster/bem_1x1_valfis_res.tif'
 
 # BEM values non-residential
-path_bem_nres = SYSTEM_DIR/'exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
+# path_bem_nres = SYSTEM_DIR/'exposure/bem_global_raster/bem_1x1_valfis_nres.tif'
 
 # grid for BEM
-path_grid_tif = SYSTEM_DIR/'exposure/grid_1x1_gid.tif'
+#path_grid_tif = SYSTEM_DIR/'exposure/grid_1x1_gid.tif'
 
 # folder for country bem files with sub-components
-path_cntry_bem = str(SYSTEM_DIR/'exposure/bem_cntry_files/') + '/'
+# path_cntry_bem = str(SYSTEM_DIR/'exposure/bem_cntry_files/') + '/'
 
 # =============================================================================
 # =============================================================================
