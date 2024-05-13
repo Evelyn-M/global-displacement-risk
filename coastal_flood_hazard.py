@@ -89,7 +89,7 @@ def generate_hazard_object(tiles, root_dir, selected_rcp, selected_year, HAZ_TYP
                     'frequency': 1 / np.array(rp_values_sorted)
                 }
             )
-            haz.centroids.set_meta_to_lat_lon()
+            haz.centroids.to_default_crs()
             hazards.append(haz)
         else:
             print(f"Tile directory {tile_path} not found, skipping...")
