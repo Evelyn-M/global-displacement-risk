@@ -18,7 +18,7 @@ def agg_sparse_rps(sparse_bool, exp_gdf, rps, scen_name, group_admin1=True):
     exp_gdf : gpd.GeoDataFrame
         exposure geodataframe to append impacts to
     scen_name : str 
-        scenario name to differentiate various impact matrices by(suggestion {impfsource}_{thresh})
+        scenario name to differentiate various impact matrices by(suggestion {impfsource}_{thresh} or {thresh})
     group_admin1 : bool
         whether to group results by admin1 (default: True), else full exp_gdf returned
         
@@ -35,7 +35,7 @@ def agg_sparse_rps(sparse_bool, exp_gdf, rps, scen_name, group_admin1=True):
     
     # save impacts to exposure gdf
     for rp in rps:
-        exp_gdf[f'imp_rp_{rp}_{scen_name}'] = full_bool[ix_rps[rp],:].astype(int).sum(axis=0)
+        exp_gdf[f'imp_rp_{rp}_{scen_name}'] = full_bool[ix_rps[rp],:].astype(int).sum(axis=0)*exp_gdf['valhum']
     
     # groupe exposure gdf by admin1 and sum over impacts (keep only these)
     if group_admin1:
@@ -67,6 +67,7 @@ def compute_aeds(df_imps, rps, scen_name):
 def compute_impstats(list_dfimps, rps):
     """
     Given a list of X impact scenario-dfs, compute min, median and max impact per RP and for AED, for all exposures.
+    Note: Only makes sense if various impfs sources in scenarios. 
     
     Parameters
     ----------
