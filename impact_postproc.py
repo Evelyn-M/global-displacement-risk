@@ -64,6 +64,14 @@ def compute_aeds(df_imps, rps, scen_name):
         df_imps[f'aed_{scen_name}']+= df_imps[f'imp_rp_{rp}_{scen_name}']/rp 
     return df_imps
 
+def compute_admin0(df_imps):
+    """
+    sum over all exposures to get admin0 impacts.
+    """
+    imps_admin_0 = df_imps.sum(axis=0)
+    imps_admin_0.name = 'admin0'
+    return df_imps.append(imps_admin_0)
+    
 def compute_impstats(list_dfimps, rps):
     """
     Given a list of X impact scenario-dfs, compute min, median and max impact per RP and for AED, for all exposures.

@@ -11,6 +11,8 @@ import copy
 import numpy as np
 import os
 from pathlib import Path
+import pandas as pd
+import sys
 
 from climada.hazard import TropCyclone, Hazard
 from climada.entity.exposures import Exposures
@@ -25,7 +27,7 @@ import coastal_flood_hazard
 # Constants
 PATH_CF_TILES = Path('/cluster/work/climate/evelynm/IDMC_UNU/hazard/coastal_flood/venDEM_scaled_1km')
 PATH_RESULTS = Path('/cluster/work/climate/evelynm/IDMC_UNU/results/risk_cf')
-DMG_THRESHS = {'low' : 0.3, 'med' : 0.45, 'high': 0.6}
+DMG_THRESHS = {'low' : 0.35, 'med' : 0.55, 'high': 0.7}
 
 
 # =============================================================================
@@ -38,10 +40,10 @@ if __name__ == '__main__':
     path_save = PATH_RESULTS / cntry_iso
     
     if not path_save.is_dir():
-        os.mkdir()
+        os.mkdir(path_save)
        
     # load bem, make exp
-    gdf_bem_subcomps = exposure.gdf_from_bem_subcomps(cntry, opt='full')
+    gdf_bem_subcomps = exposure.gdf_from_bem_subcomps(cntry_iso, opt='full')
     gdf_bem_subcomps = gdf_bem_subcomps[gdf_bem_subcomps.valhum>1] # filter out rows with basically no population
     gdf_bem_subcomps = exposure.assign_admin1_attr(gdf_bem_subcomps, exposure.path_admin1_attrs, source='gadm')
     
@@ -54,7 +56,7 @@ if __name__ == '__main__':
     # load hazard
     tiles = coastal_flood_hazard.find_tiles(
         exp.gdf['latitude'].min(), exp.gdf['latitude'].max(), exp.gdf['longitude'].min(), exp.gdf['longitude'].max())
-    CF = coastal_flood_hazard.generate_hazard_object(tiles, haz_CF_dir, rcp, ref_year, 'FL')
+    CF = coastal_flood_hazard.generate_hazard_object(tiles, PATH_CF_TILES, rcp, ref_year, 'FL')
     rps = 1/CF.frequency[:7]
     
     # compute physical impact and save for future postproc
@@ -67,24 +69,33 @@ if __name__ == '__main__':
     dict_imp_bldg['ivm'] = ImpactCalc(exp, vulnerability.IMPF_SET_FL_IVM, CF).impact(save_mat=True)
     
     # displacement postprocessing (thresholds)
-    dict_bools_displ = {}
+    dict_bools_displ = {
+        'cima' : {},
+        'ivm' : {}
+    }
+    
     for source in dict_imp_bldg.keys():
         for thresh in DMG_THRESHS.keys():
-            dict_bools_displ[f'{source}_{thresh}'] = dict_imp_bldg[source].imp_mat > DMG_THRESHS[thresh]
+            dict_bools_displ[source][thresh] = dict_imp_bldg[source].imp_mat > DMG_THRESHS[thresh]
     
     # impact df per scenario & rp + aed
-    dict_df_imps_admin1 = {}
-    for scen, sparse_bool in dict_bools_displ.items():
-        dict_df_imps_admin1[scen] = impact_postproc.agg_sparse_rps(sparse_bool, exp.gdf, rps, scen, group_admin1=True)
-        dict_df_imps_admin1[scen] = impact_postproc.compute_aeds(dict_df_imps_admin1[scen], rps, scen)
+    dict_df_imps_admin1 = {
+        'cima' : {},
+        'ivm' : {}
+    }
     
-    # min, median & max stats
-    df_impstats = compute_impstats(list(dict_df_imps_admin1.values()), rps)
+    for source, dict_threshs in dict_bools_displ.items():
+        for thresh, sparse_bool in dict_threshs.items():
+            dict_df_imps_admin1[source][thresh] = impact_postproc.agg_sparse_rps(sparse_bool, exp.gdf, rps, thresh, group_admin1=True)
+            dict_df_imps_admin1[source][thresh] = impact_postproc.compute_aeds(dict_df_imps_admin1[source][thresh], rps, thresh)
+            dict_df_imps_admin1[source][thresh] = impact_postproc.compute_admin0(dict_df_imps_admin1[source][thresh])
+    
     
     #save all necessary outputs
-    df_impstats.to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}.csv')
-    for source, imp in dict_imp_bldg.items():
-        imp.write_sparse_csr(path_save / f'{cntry_iso}_{rcp}_{ref_year}_{source}.npz')
+    pd.concat(dict_df_imps_admin1['cima'].values(), axis=1).to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}_cima.csv')
+    pd.concat(dict_df_imps_admin1['ivm'].values(), axis=1).to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}_ivm.csv')
+
+    # for now, do not save imp matrices.
+    #for source, imp in dict_imp_bldg.items():
+    #    imp.write_sparse_csr(path_save / f'{cntry_iso}_{rcp}_{ref_year}_{source}.npz')
         
-    # TODO: save cntry stats to dict
-    # imp_stats[[col for col in imp_stats.columns if 'aed' in col]].sum()
