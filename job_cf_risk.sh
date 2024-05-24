@@ -1,5 +1,5 @@
 
-for cntry in PHL ETH
+for cntry in LKA BGD MOZ #PHL ETH SOM
 do
         for rcp in RCP26 RCP45 RCP85
 	do
