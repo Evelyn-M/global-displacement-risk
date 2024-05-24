@@ -3,6 +3,8 @@ Functions to post-process impact matrices
 """
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 def agg_sparse_rps(sparse_bool, exp_gdf, rps, scen_name, group_admin1=True):
     """
@@ -96,3 +98,59 @@ def compute_impstats(list_dfimps, rps):
     imp_stats[f'aed_max'] = np.max(imp_all_scens[[col for col in imp_all_scens.columns if 'aed' in col ]], axis=1)
     
     return imp_stats
+
+
+def plot_aeds_admin0(df_rcp26, df_rcp45, df_rcp85, cntry_iso):
+    fig, ax = plt.subplots()
+    x = [2020, 2050, 2100]
+
+    ax.plot(x, df_rcp26['aed_med'], label='RCP2.6', color='b')
+    ax.fill_between(x,
+       df_rcp26['aed_low'], df_rcp26['aed_high'], color='b', alpha=.15)
+
+    ax.plot(x, df_rcp45['aed_med'], label='RCP4.5',  color='g')
+    ax.fill_between(x,
+       df_rcp45['aed_low'], df_rcp45['aed_high'], color='g', alpha=.15)
+
+    ax.plot(x, df_rcp85['aed_med'], label='RCP8.5', color='r', )
+    ax.fill_between(x,
+       df_rcp85['aed_low'], df_rcp85['aed_high'], color='r', alpha=.15)
+
+    ax.legend(loc=4)
+    ax.set_ylim(ymin=0)
+    ax.set_title(f'Avg. annual expected displacement, {cntry_iso}')
+    plt.show()
+    
+# load admin0 AEDs from all rcps
+def load_aeds_admin0(cntry_iso, source, path_results='/cluster/work/climate/evelynm/IDMC_UNU/results/risk_cf'):
+    rcp=26
+    df_rcp26 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],
+              ], axis=1)
+    df_rcp26.columns = [2020, 2050, 2100]
+    df_rcp26 = df_rcp26.T
+    df_rcp26 = df_rcp26.astype(float)
+
+    rcp=45
+    df_rcp45 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],
+              ], axis=1)
+    df_rcp45.columns = [2020, 2050, 2100]
+    df_rcp45 = df_rcp45.T
+    df_rcp45 = df_rcp45.astype(float)
+
+    rcp=85
+    df_rcp85 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
+        ['aed_low', 'aed_med', 'aed_high']],
+              ], axis=1)
+    df_rcp85.columns = [2020, 2050, 2100]
+    df_rcp85 = df_rcp85.T
+    df_rcp85 = df_rcp85.astype(float)
+
+    return df_rcp26, df_rcp45, df_rcp85
