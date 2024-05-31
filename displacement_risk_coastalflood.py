@@ -27,7 +27,7 @@ import coastal_flood_hazard
 # Constants
 PATH_CF_TILES = Path('/cluster/work/climate/evelynm/IDMC_UNU/hazard/coastal_flood/venDEM_scaled_1km')
 PATH_RESULTS = Path('/cluster/work/climate/evelynm/IDMC_UNU/results/risk_cf')
-DMG_THRESHS = {'low' : 0.35, 'med' : 0.55, 'high': 0.7}
+DMG_THRESHS = {'low' : 0.3, 'med' : 0.5, 'high': 0.7}
 
 
 # =============================================================================
@@ -41,7 +41,10 @@ if __name__ == '__main__':
     
     if not path_save.is_dir():
         os.mkdir(path_save)
-       
+    
+    # for logging purposes
+    print(cntry_iso, rcp, ref_year)
+    
     # load bem, make exp
     gdf_bem_subcomps = exposure.gdf_from_bem_subcomps(cntry_iso, opt='full')
     gdf_bem_subcomps = gdf_bem_subcomps[gdf_bem_subcomps.valhum>1] # filter out rows with basically no population
@@ -60,30 +63,35 @@ if __name__ == '__main__':
     rps = 1/CF.frequency[:7]
     
     # compute physical impact and save for future postproc
-    # scenario 1: capra/cima impfs
     dict_imp_bldg = {}
-    exp.gdf['impf_FL'] = exp.gdf['se_seismo'].map(vulnerability.DICT_PAGER_FLIMPF_CIMA)
-    dict_imp_bldg['cima'] = ImpactCalc(exp, vulnerability.IMPF_SET_FL_CIMA, CF).impact(save_mat=True)
+    dict_bools_displ = {}
+    dict_df_imps_admin1 = {}
+    
+    # scenario 1: capra/cima impfs
+    try:
+        exp.gdf['impf_FL'] = exp.gdf['se_seismo'].map(vulnerability.DICT_PAGER_FLIMPF_CIMA)
+        dict_imp_bldg['cima'] = ImpactCalc(exp, vulnerability.IMPF_SET_FL_CIMA, CF).impact(save_mat=True)
+        dict_bools_displ['cima'] = {}
+        dict_df_imps_admin1['cima'] = {}
+
+    except:
+        print('Missing building types in cima-impf')
+    
     # scenario 2: ivm impfs
-    exp.gdf['impf_FL'] = exp.gdf['se_seismo'].map(vulnerability.DICT_PAGER_FLIMPF_IVM)
-    dict_imp_bldg['ivm'] = ImpactCalc(exp, vulnerability.IMPF_SET_FL_IVM, CF).impact(save_mat=True)
+    try:
+        exp.gdf['impf_FL'] = exp.gdf['se_seismo'].map(vulnerability.DICT_PAGER_FLIMPF_IVM)
+        dict_imp_bldg['ivm'] = ImpactCalc(exp, vulnerability.IMPF_SET_FL_IVM, CF).impact(save_mat=True)
+        dict_bools_displ['ivm'] = {}
+        dict_df_imps_admin1['ivm'] = {}
+    except:
+        print('Missing building types in ivm-impf')
     
     # displacement postprocessing (thresholds)
-    dict_bools_displ = {
-        'cima' : {},
-        'ivm' : {}
-    }
-    
     for source in dict_imp_bldg.keys():
         for thresh in DMG_THRESHS.keys():
             dict_bools_displ[source][thresh] = dict_imp_bldg[source].imp_mat > DMG_THRESHS[thresh]
     
     # impact df per scenario & rp + aed
-    dict_df_imps_admin1 = {
-        'cima' : {},
-        'ivm' : {}
-    }
-    
     for source, dict_threshs in dict_bools_displ.items():
         for thresh, sparse_bool in dict_threshs.items():
             dict_df_imps_admin1[source][thresh] = impact_postproc.agg_sparse_rps(sparse_bool, exp.gdf, rps, thresh, group_admin1=True)
@@ -92,8 +100,8 @@ if __name__ == '__main__':
     
     
     #save all necessary outputs
-    pd.concat(dict_df_imps_admin1['cima'].values(), axis=1).to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}_cima.csv')
-    pd.concat(dict_df_imps_admin1['ivm'].values(), axis=1).to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}_ivm.csv')
+    for source in dict_df_imps_admin1.keys():
+        pd.concat(dict_df_imps_admin1[source].values(), axis=1).to_csv(path_save / f'{cntry_iso}_{rcp}_{ref_year}_{source}.csv')
 
     # for now, do not save imp matrices.
     #for source, imp in dict_imp_bldg.items():
