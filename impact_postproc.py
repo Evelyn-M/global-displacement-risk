@@ -120,37 +120,32 @@ def plot_aeds_admin0(df_rcp26, df_rcp45, df_rcp85, cntry_iso):
     ax.set_ylim(ymin=0)
     ax.set_title(f'Avg. annual expected displacement, {cntry_iso}')
     plt.show()
+
+def _load_format_aed_results(base_path_start, base_path_end):
+    years = [2020, 2050, 2100]
+    df = pd.concat([pd.read_csv(base_path_start+str(year)+base_path_end).iloc[-1][['aed_low', 'aed_med', 'aed_high']]
+                    for year in years], axis=1)
+    df.columns = years
+    df = df.T
+    df = df.astype(float)
+    return df
     
+
 # load admin0 AEDs from all rcps
 def load_aeds_admin0(cntry_iso, source, path_results='/cluster/work/climate/evelynm/IDMC_UNU/results/risk_cf'):
+    
+    base_path_end = f'_{source}.csv'
+    
     rcp=26
-    df_rcp26 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],
-              ], axis=1)
-    df_rcp26.columns = [2020, 2050, 2100]
-    df_rcp26 = df_rcp26.T
-    df_rcp26 = df_rcp26.astype(float)
-
+    base_path_start = f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_'
+    df_rcp26 = _load_format_aed_results(base_path_start, base_path_end)
+    
     rcp=45
-    df_rcp45 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],
-              ], axis=1)
-    df_rcp45.columns = [2020, 2050, 2100]
-    df_rcp45 = df_rcp45.T
-    df_rcp45 = df_rcp45.astype(float)
+    base_path_start = f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_'
+    df_rcp45 = _load_format_aed_results(base_path_start, base_path_end)
 
     rcp=85
-    df_rcp85 = pd.concat([pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2020_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2050_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],pd.read_csv(f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_2100_cima.csv').iloc[-1][
-        ['aed_low', 'aed_med', 'aed_high']],
-              ], axis=1)
-    df_rcp85.columns = [2020, 2050, 2100]
-    df_rcp85 = df_rcp85.T
-    df_rcp85 = df_rcp85.astype(float)
+    base_path_start = f'{path_results}/{cntry_iso}/{cntry_iso}_RCP{rcp}_'
+    df_rcp85 = _load_format_aed_results(base_path_start, base_path_end)
 
     return df_rcp26, df_rcp45, df_rcp85
