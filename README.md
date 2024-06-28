@@ -3,24 +3,24 @@
 This repository contains the code base to model the global displacement risk due to tropical cyclones and coastal flooding.
 
 ### Contributors and contact
-[Simona Meiler](mailto:simona.meiler@usys.ethz.ch)
-[Evelyn Mühlhofer](mailto:evelyn.muehlhofer@usys.ethz.ch)
-[Samuel Lüthi](mailto:samuel.luethi@usys.ethz.ch)
+- [Simona Meiler](mailto:simona.meiler@usys.ethz.ch)
+- [Evelyn Mühlhofer](mailto:evelyn.muehlhofer@usys.ethz.ch)
+- [Samuel Lüthi](mailto:samuel.luethi@usys.ethz.ch)
 
 
 
 ### Content
 The repository is divided into 3 parts:
   - /main_scripts
-All scripts needed for replicating the analysis. Please note that the model was run on the Euler cluster at ETH Zurich. Some of these scripts are slightly opaque. We recommend therefore looking at the tutorials.
+    - All scripts needed for replicating the analysis. Please note that the model was run on the Euler cluster at ETH Zurich. Some of these scripts are slightly opaque. We recommend therefore looking at the tutorials.
 The scripts are separated into content-wise grouped modules (e.g. “vulnerability”, “exposure”, etc.); iinto a complete computation chain script (“displacement_risk_..”); into bash-scripts for running these on the Euler cluster (“job_..”).
   - /doc
-Tutorials for understanding the individual model components and additional scripts created during the project. 
+    - Tutorials for understanding the individual model components and additional scripts created during the project. 
 Scripts starting with “tutorial_” exemplify the use of methods in the corresponding main_script module (e.g. tutorial_vulnerability demonstrates the workings of the “main_scripts/vulnerability.py” module) 
 Scripts starting with “sensitvity_check” test how results respond to various assumptions taken in the modelling process (such as the setting of building thresholds or the impact function source taken.
 Scripts starting with “results_overview” look at the raw results produce and give a first data handling glimpse of these.
   - /data
-Small data files needed for the calculations. Due to obvious data constraints we cannot upload the complete datasets. However, they are available upon reasonable and non-commercial requests.
+    - Small data files needed for the calculations. Due to obvious data constraints we cannot upload the complete datasets. However, they are available upon reasonable and non-commercial requests.
 
 ### Model approach
 - To estimate global displacement, we calculated global building damages from tropical cyclone winds and coastal flooding. We assume that people are displaced when 55% (30-70%) of a building gets destroyed.
