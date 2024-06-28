@@ -1,12 +1,12 @@
 
-for cntry in VAT SLE LAO GEO SMR LUX LVA CPV MUS PAN ROU TUV TGO SWZ ZAF LCA AGO ALB MYT KNA NER TUR FIN STP KHM KOR SLB PYF POL LIE SVK LBY ERI MDV ALA AIA FRO XAB CXR MKD SYR TLS MDG NPL SJM MYS TCD VNM MAF CIV REU TWN NGA AFG MTQ CYM WSM SGP GRL KIR NCL PAK MNE CMR GMB VIR WLF BWA ABW TZA NZL MNG KGZ CZE BGD NIU BLZ XAP MDA KWT PCN GTM XPI DMA SEN IMN JEY JAM SHN JOR QAT TON NRU MLT TTO TJK KEN LKA TUN HND SSD EGY SUR PLW CHL PRI SWE PRT URY TCA XUK DEU NOR SAU CUB SXM GRD UZB UKR LBN SDN MRT MMR KAZ PRY ESP ZWE IND MWI MLI LTU VUT NFK VEN MEX THA LSO VGB PNG SLV ITA HTI NIC CHE COL IRQ BHR OMN SRB GAB SYC FJI SVN MHL TKM XAC BMU ISR MAR XJK XJL BRB YEM NAM MSR PRK VCT CUW AUS TKL HRV PER AND MAC BEN XRI GUM XXX PSE BIH IRN MNP SPM MCO ARE NLD RWA ZMB CAN LBR UGA RUS USA
+for cntry in USA IND RUS
 do
         for rcp in RCP26 RCP45 RCP85
 	do
 		for year in 2020 2050 2100
 		do
         		echo $cntry $rcp $year
-			sbatch --parsable -J cf_risk_$cntry_$rcp_$yer --time=4:00:00 --nodes=1 -n 1 --mem-per-cpu=100000 --mail-type=FAIL --wrap="python /cluster/project/climate/evelynm/global-displacement-risk/displacement_risk_coastalflood.py $cntry $rcp $year"
+			sbatch --parsable -J cf_risk_$cntry_$rcp_$yer --time=48:00:00 --nodes=1 --mem=400000 --mail-type=FAIL --wrap="python /cluster/project/climate/evelynm/global-displacement-risk/displacement_risk_coastalflood_lrg.py $cntry $rcp $year"
        
 		done
        done

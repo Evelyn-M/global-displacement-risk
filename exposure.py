@@ -190,12 +190,14 @@ def gdf_from_bem_subcomps(cntry_name, opt='full'):
     df_bem_subcomps = pd.read_csv(path_cntry_bem_csv)
 
     # delete unnecessary columns (based on UNEP-GRID feedback)
-    df_bem_subcomps.pop('bs_value_nr')
-    df_bem_subcomps.pop('bs_value_r')
+    if 'bs_value_nr' in df_bem_subcomps.columns:
+        df_bem_subcomps.pop('bs_value_nr')
+        df_bem_subcomps.pop('bs_value_r')
 
     # delete columns with no economic and human value
-    df_bem_subcomps = df_bem_subcomps[(
-        (df_bem_subcomps['valhum'] > 0) & (df_bem_subcomps['valfis'] > 0))]
+    if 'valhum' in df_bem_subcomps.columns:
+        df_bem_subcomps = df_bem_subcomps[(
+            (df_bem_subcomps['valhum'] > 0) & (df_bem_subcomps['valfis'] > 0))]
 
     # load centroids
     gdf_grid = _centr_from_raster(cntry_name)
