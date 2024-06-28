@@ -46,6 +46,11 @@ The Holland (2008) parametric wind model was used to derive 2D windfields for ea
   - TC wind: We used the building type specific HAZUS vulnerability to curves and linked them to the BEM building types. For simplicity, we approximated the original curves using a cubic sigmoid function
   - Coastal floods: We relied on building type specific flood impact functions from IVM and CIMA foundation. Again, by linking the impact functions to the BEM building types.
 
+### Results
+
+Results are computed per country at full resolution (determined by gridded hazard and exposure resolutions), then aggregated by admin-1 and country. 
+Depending on the hazard, average annual displacement (AAD) and expected displacement for the respective return periods are reported.
+
 ### System requirements
 
 - All python analysis was performed on python version 3.9
