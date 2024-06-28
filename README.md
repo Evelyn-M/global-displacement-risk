@@ -16,9 +16,9 @@ The repository is divided into 3 parts:
 The scripts are separated into content-wise grouped modules (e.g. “vulnerability”, “exposure”, etc.); iinto a complete computation chain script (“displacement_risk_..”); into bash-scripts for running these on the Euler cluster (“job_..”).
   - /doc
     - Tutorials for understanding the individual model components and additional scripts created during the project. 
-Scripts starting with “tutorial_” exemplify the use of methods in the corresponding main_script module (e.g. tutorial_vulnerability demonstrates the workings of the “main_scripts/vulnerability.py” module) 
-Scripts starting with “sensitvity_check” test how results respond to various assumptions taken in the modelling process (such as the setting of building thresholds or the impact function source taken.
-Scripts starting with “results_overview” look at the raw results produce and give a first data handling glimpse of these.
+    - Scripts starting with “tutorial_” exemplify the use of methods in the corresponding main_script module (e.g. tutorial_vulnerability demonstrates the workings of the “main_scripts/vulnerability.py” module) 
+    - Scripts starting with “sensitvity_check” test how results respond to various assumptions taken in the modelling process (such as the setting of building thresholds or the impact function source taken.
+    - Scripts starting with “results_overview” look at the raw results produce and give a first data handling glimpse of these.
   - /data
     - Small data files needed for the calculations. Due to obvious data constraints we cannot upload the complete datasets. However, they are available upon reasonable and non-commercial requests.
 
