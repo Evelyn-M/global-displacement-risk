@@ -23,26 +23,28 @@ Scripts starting with “results_overview” look at the raw results produce and
 Small data files needed for the calculations. Due to obvious data constraints we cannot upload the complete datasets. However, they are available upon reasonable and non-commercial requests.
 
 ### Model approach
-To estimate global displacement, we calculated global building damages from tropical cyclone winds and coastal flooding. We assume that people are displaced when 55% (30-70%) of a building gets destroyed.
-Thus, we combine information on hazard (TC, coastal flood), exposure (building type), and vulnerability (ability of buildings to withstand a hazard) for estimating building damages.
-We use only globally consistent models & data layers to ensure intercomparison of results.
-This approach is obviously a strong simplification of the complex processes that actually lead to natural catastrophe induced displacement.
+- To estimate global displacement, we calculated global building damages from tropical cyclone winds and coastal flooding. We assume that people are displaced when 55% (30-70%) of a building gets destroyed.
+- Thus, we combine information on hazard (TC, coastal flood), exposure (building type), and vulnerability (ability of buildings to withstand a hazard) for estimating building damages.
+- We use only globally consistent models & data layers to ensure intercomparison of results.
+- This approach is obviously a strong simplification of the complex processes that actually lead to natural catastrophe induced displacement.
 
 ### Data source
 Sources used in the scripts are detailed here.
-Hazard:
-Tropical cyclones: 
+- Hazard:
+  - Tropical cyclones: 
 We used synthetic tropical cyclone event sets from the MIT model (Emanuel et al., 2006, 2008). The MIT model was run to produce tropical cyclone event sets for the historical period downscaled from ERA-5 reanalysis (Meiler et al., 2022) and for future climate conditions based on downscaling from nine different GCMs for SSP2-4.5, SSP3-7.0, SSP5-8.5 for future time periods 2041-2060 and 2081-2100 as detailed in Meiler et al. (2023). 
 The Holland (2008) parametric wind model was used to derive 2D windfields for each tropical cyclone in the MIT event set at a resolution of 150 arcsec on land (3600 arcsec over the ocean). Max. sustained wind speeds at each grid point form the hazard intensity variable used for displacement risk calculation.
-Coastal floods:
-Coastal flood hazard maps were produced after Kasmalkar et al. (2023). They represent floods from storm surges and sea-level rise (SLR). We use coastal flood hazard maps depicting the flood depth of the 2-, 5-, 10-, 25-, 50-, 100-, 250-, 500-, 1000-yr return period (RP) at a horizontal resolution of 1 km. Future SLR is considered for the years 2050, 2100 and RCP 2.6 and 8.5.
 
-Exposure: 
-Buildings: We used the [BEM](https://giri.unepgrid.ch/sites/default/files/2023-09/GIRI_BEM_report_UNIGE.pdf) (building exposure model) layer from UNEP Grid.
-Population: The BEM layer also contains information on population based on the global human settlement layer.
-Vulnerability: 
-TC wind: We used the building type specific HAZUS vulnerability to curves and linked them to the BEM building types. For simplicity, we approximated the original curves using a cubic sigmoid function
-Coastal floods: We relied on building type specific flood impact functions from IVM and CIMA foundation. Again, by linking the impact functions to the BEM building types.
+- Coastal floods:
+  - Coastal flood hazard maps were produced after Kasmalkar et al. (2023). They represent floods from storm surges and sea-level rise (SLR). We use coastal flood hazard maps depicting the flood depth of the 2-, 5-, 10-, 25-, 50-, 100-, 250-, 500-, 1000-yr return period (RP) at a horizontal resolution of 1 km. Future SLR is considered for the years 2050, 2100 and RCP 2.6 and 8.5.
+
+- Exposure: 
+  - Buildings: We used the [BEM](https://giri.unepgrid.ch/sites/default/files/2023-09/GIRI_BEM_report_UNIGE.pdf) (building exposure model) layer from UNEP Grid.
+  - Population: The BEM layer also contains information on population based on the global human settlement layer.
+
+- Vulnerability: 
+  - TC wind: We used the building type specific HAZUS vulnerability to curves and linked them to the BEM building types. For simplicity, we approximated the original curves using a cubic sigmoid function
+  - Coastal floods: We relied on building type specific flood impact functions from IVM and CIMA foundation. Again, by linking the impact functions to the BEM building types.
 
 ### System requirements
 
