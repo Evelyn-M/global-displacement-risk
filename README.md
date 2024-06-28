@@ -1,6 +1,6 @@
 ## Global displacement risk
 
-This repository contains the code base to model the global displacement risk due to tropical cyclones and coastal flooding. The project is the result of a collaboration between the internal displacment monitoring center (IDMC), then UN University Bonn, and ETH Zurich.
+This repository contains the code base to model the global displacement risk due to tropical cyclones and coastal flooding. The project is the result of a collaboration between the internal displacment monitoring center (IDMC), the UN University Bonn, and ETH Zurich.
 
 ### Contributors and contact
 - [Simona Meiler](mailto:simona.meiler@usys.ethz.ch)
