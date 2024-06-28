@@ -1,34 +1,34 @@
-##Global displacement risk
+## Global displacement risk
 
 This repository contains the code base to model the global displacement risk due to tropical cyclones and coastal flooding.
 
-###Contributors and contact
+### Contributors and contact
 [Simona Meiler](mailto:simona.meiler@usys.ethz.ch)
 [Evelyn Mühlhofer](mailto:evelyn.muehlhofer@usys.ethz.ch)
 [Samuel Lüthi](mailto:samuel.luethi@usys.ethz.ch)
 
 
 
-###Content
+### Content
 The repository is divided into 3 parts:
-/main_scripts
+  - /main_scripts
 All scripts needed for replicating the analysis. Please note that the model was run on the Euler cluster at ETH Zurich. Some of these scripts are slightly opaque. We recommend therefore looking at the tutorials.
 The scripts are separated into content-wise grouped modules (e.g. “vulnerability”, “exposure”, etc.); iinto a complete computation chain script (“displacement_risk_..”); into bash-scripts for running these on the Euler cluster (“job_..”).
-/doc
+  - /doc
 Tutorials for understanding the individual model components and additional scripts created during the project. 
 Scripts starting with “tutorial_” exemplify the use of methods in the corresponding main_script module (e.g. tutorial_vulnerability demonstrates the workings of the “main_scripts/vulnerability.py” module) 
 Scripts starting with “sensitvity_check” test how results respond to various assumptions taken in the modelling process (such as the setting of building thresholds or the impact function source taken.
 Scripts starting with “results_overview” look at the raw results produce and give a first data handling glimpse of these.
-/data
+  - /data
 Small data files needed for the calculations. Due to obvious data constraints we cannot upload the complete datasets. However, they are available upon reasonable and non-commercial requests.
 
-###Model approach
+### Model approach
 To estimate global displacement, we calculated global building damages from tropical cyclone winds and coastal flooding. We assume that people are displaced when 55% (30-70%) of a building gets destroyed.
 Thus, we combine information on hazard (TC, coastal flood), exposure (building type), and vulnerability (ability of buildings to withstand a hazard) for estimating building damages.
 We use only globally consistent models & data layers to ensure intercomparison of results.
 This approach is obviously a strong simplification of the complex processes that actually lead to natural catastrophe induced displacement.
 
-###Data source
+### Data source
 Sources used in the scripts are detailed here.
 Hazard:
 Tropical cyclones: 
@@ -44,7 +44,7 @@ Vulnerability:
 TC wind: We used the building type specific HAZUS vulnerability to curves and linked them to the BEM building types. For simplicity, we approximated the original curves using a cubic sigmoid function
 Coastal floods: We relied on building type specific flood impact functions from IVM and CIMA foundation. Again, by linking the impact functions to the BEM building types.
 
-###System requirements
+### System requirements
 
 - All python analysis was performed on python version 3.9
 - Calculations were done using the  [CLIMADA](https://github.com/CLIMADA-project/climada_python) model developed by the Weather & Climate risks group at ETH Zurich. Analysis was performed on the model version CLIMADA 4.1.1
