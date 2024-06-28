@@ -48,8 +48,7 @@ The Holland (2008) parametric wind model was used to derive 2D windfields for ea
 
 ### Results
 
-Results are computed per country at full resolution (determined by gridded hazard and exposure resolutions), then aggregated by admin-1 and country. 
-Depending on the hazard, average annual displacement (AAD) and expected displacement for the respective return periods are reported.
+Average annual displacement (AAD) and, depending on the hazard type, expected displacement for the respective return periods are reported, per RCP / SSP and per displacement threshold scenario. Results are computed per country at full resolution (determined by gridded hazard and exposure resolutions), then aggregated by admin-1 and on country level. 
 
 ### System requirements
 
