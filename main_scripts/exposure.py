@@ -48,7 +48,7 @@ path_grid_tif = DATA_DIR/"centroids"/"grid_1x1_gid.tif"
 
 # # folder for country bem files with sub-components
 #path_cntry_bem = '/cluster/work/climate/evelynm/IDMC_UNU/exposure/bem_cntry_files/'
-path_cntry_bem = DATA_DIR/"exposure"/"bem_cntry_files"
+path_cntry_bem = str(DATA_DIR/"exposure"/"bem_cntry_files") + '/'
 
 # # source and destination projections
 # proj_54009 = pyproj.crs.CRS.from_string('esri:54009')
