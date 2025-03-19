@@ -1,6 +1,6 @@
 ## Global displacement risk
 
-This repository contains the code base to model the global displacement risk due to tropical cyclones and coastal flooding. The project is the result of a collaboration between the internal displacment monitoring center (IDMC), the UN University Bonn, and ETH Zurich.
+This repository contains the code base to model the global displacement risk due to tropical cyclone winds and coastal flooding. The project is the result of a collaboration between the internal displacment monitoring center (IDMC), the UN University Bonn, and ETH Zurich. Additionally, it contains scripts to generate publication figures and tables for the article titled "A natural hazard risk modelling approach to human displacement - frontiers & challenges" by Meiler et al. (2025), in preparation. This publication features global displacement risk results from river floods and droughts in addition to the two hazards described above.
 
 ### Contributors and contact
 - [Simona Meiler](mailto:simona.meiler@usys.ethz.ch)
